@@ -1,0 +1,7 @@
+{% load test_tags %}
+{% quote_len_odd number as odd %}
+{{ quote }}
+Line {{ number }} of {% number_of_quotes %}
+{{ odd.if }}Odd number of characters.
+{{ odd.else }}Even number of characters.
+{{ odd.endif }}

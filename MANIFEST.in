@@ -1,0 +1,4 @@
+include LICENSE
+include README.md
+recursive-include ssify/templates *.html
+recursive-include tests/templates *.html
