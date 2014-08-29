@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+# This file is part of django-ssify, licensed under GNU Affero GPLv3 or later.
+# Copyright © Fundacja Nowoczesna Polska. See README.md for more information.
+#
 """
 This module should only be used for debugging SSI statements.
 
@@ -6,8 +10,12 @@ in the first place, and is unsafe. You should use a proper webserver with SSI
 support as a proxy (i.e. Nginx with ssi=on).
 
 """
+from __future__ import unicode_literals
 import re
-import urlparse
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
 from django.core.urlresolvers import resolve
 from ssify import DEBUG_VERBOSE
 
@@ -43,11 +51,15 @@ class DebugUnSsiMiddleware(object):
             """Replaces SSI include with contents rendered by relevant view."""
             path = process_value(match.group('path'))
             func, args, kwargs = resolve(path)
-            parsed = urlparse.urlparse(path)
+            parsed = urlparse(path)
+
+            # Reuse the original request, but reset some attributes.
             request.META['PATH_INFO'] = request.path_info = \
                 request.path = parsed.path
             request.META['QUERY_STRING'] = parsed.query
-            content = func(request, *args, **kwargs).content
+            request.ssi_vars_needed = {}
+
+            content = func(request, *args, **kwargs).content.decode('ascii')
             content = process_content(content)
             if DEBUG_VERBOSE:
                 return "".join((
@@ -111,7 +123,8 @@ class DebugUnSsiMiddleware(object):
             return content
 
         variables = {}
-        response.content = process_content(response.content)
+        response.content = process_content(
+            response.content.decode('ascii')).encode('ascii')
         response['Content-Length'] = len(response.content)
 
     def process_response(self, request, response):

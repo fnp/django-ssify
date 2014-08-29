@@ -1,0 +1,3 @@
+{% load ssify test_tags %}
+{% random_number 4 as a %}
+{% ssi_include 'args' limit=a %}

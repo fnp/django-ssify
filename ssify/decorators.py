@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+# This file is part of django-ssify, licensed under GNU Affero GPLv3 or later.
+# Copyright © Fundacja Nowoczesna Polska. See README.md for more information.
+#
+"""
+Defines decorators for use in ssify-enabled projects.
+"""
+from __future__ import unicode_literals
 import functools
 from inspect import getargspec
 import warnings
@@ -31,10 +39,14 @@ def ssi_included(view=None, use_lang=True, get_ssi_vars=None):
                     raise exceptions.NoLangFieldError(request)
                 current_lang = get_language()
                 activate(lang)
+                request.LANGUAGE_CODE = lang
             response = view(request, *args, **kwargs)
             if use_lang:
                 activate(current_lang)
             if response.status_code == 200:
+                # We don't want this view to be cached in
+                # UpdateCacheMiddleware. We'll just cache the contents
+                # ourselves, and point the webserver to use this cache.
                 request._cache_update_cache = False
 
                 def _check_included_vars(response):
@@ -42,7 +54,7 @@ def ssi_included(view=None, use_lang=True, get_ssi_vars=None):
                     if get_ssi_vars:
                         # Remove the ssi vars that should be provided
                         # by the including view.
-                        pass_vars = set(get_ssi_vars(*args, **kwargs))
+                        pass_vars = get_ssi_vars(*args, **kwargs)
 
                         for var in pass_vars:
                             if not isinstance(var, SsiVariable):
@@ -77,8 +89,17 @@ def ssi_included(view=None, use_lang=True, get_ssi_vars=None):
 
 
 def ssi_variable(register, vary=None, name=None):
+    """
+    Creates a template tag representing an SSI variable from a function.
+
+    The function must take 'request' as its first argument.
+    It may take other arguments, which should be provided when using
+    the template tag.
+
+    """
     # Cache control?
     def dec(func):
+
         # Find own path.
         function_name = (name or
                          getattr(func, '_decorated_function', func).__name__)

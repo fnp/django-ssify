@@ -5,11 +5,13 @@
 # Python garbage
 *.pyc
 .coverage
+htmlcov
 pip-log.txt
 nosetests.xml
 build
 dist
 *.egg-info
+.tox
 
 # Mac OS X garbage
 .DS_Store

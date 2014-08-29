@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+# This file is part of django-ssify, licensed under GNU Affero GPLv3 or later.
+# Copyright © Fundacja Nowoczesna Polska. See README.md for more information.
+#
+from __future__ import unicode_literals
 from django import template
 from ssify import ssi_variable
 from tests.views import QUOTES

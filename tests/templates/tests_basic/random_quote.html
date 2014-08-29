@@ -1,4 +1,4 @@
 {% load ssify test_tags %}
 {% number_of_quotes as qlen %}
-{% random_number qlen as number %}
+{% random_number limit=qlen as number %}
 {% ssi_include 'quote' number=number %}

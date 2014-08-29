@@ -1,15 +1,28 @@
 # -*- coding: utf-8 -*-
-# This file is part of Wolnelektury, licensed under GNU Affero GPLv3 or later.
-# Copyright © Fundacja Nowoczesna Polska. See NOTICE for more information.
+# This file is part of django-ssify, licensed under GNU Affero GPLv3 or later.
+# Copyright © Fundacja Nowoczesna Polska. See README.md for more information.
 #
-from __future__ import absolute_import
+from __future__ import absolute_import, unicode_literals
 from django.conf import settings
 from django.core.urlresolvers import NoReverseMatch, reverse, resolve
-from django.middleware.csrf import get_token, rotate_token, _sanitize_token
+from django.middleware.csrf import get_token, _sanitize_token
 from django import template
 from django.utils.translation import get_language
 from ssify.decorators import ssi_variable
 from ssify.variables import SsiVariable
+
+try:
+    from django.middleware.csrf import rotate_token
+except ImportError:
+    from django.middleware.csrf import _get_new_csrf_key
+
+    # Missing in Django 1.4
+    def rotate_token(request):
+        request.META.update({
+            "CSRF_COOKIE_USED": True,
+            "CSRF_COOKIE": _get_new_csrf_key(),
+
+        })
 
 
 register = template.Library()
@@ -66,10 +79,10 @@ def ssi_include(context, name_, **kwargs):
 @ssi_variable(register, vary=('Cookie',))
 def get_csrf_token(request):
     """
-    As CsrfViewMiddleware.process_view is never for a cached response,
-    and we still need to provide a request-specific CSRF token as
-    request-info ssi variable, we must make sure here that the
-    CSRF token is in request.META['CSRF_COOKIE'].
+    CsrfViewMiddleware.process_view is never called for cached
+    responses, and we still need to provide a CSRF token as an
+    ssi variable, we must make sure here that the CSRF token
+    is in request.META['CSRF_COOKIE'].
 
     """
     token = get_token(request)

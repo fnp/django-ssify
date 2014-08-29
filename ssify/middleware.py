@@ -1,3 +1,41 @@
+# -*- coding: utf-8 -*-
+# This file is part of django-ssify, licensed under GNU Affero GPLv3 or later.
+# Copyright © Fundacja Nowoczesna Polska. See README.md for more information.
+#
+"""
+Middleware classes provide by django-ssify.
+
+The main middleware you should use is SsiMiddleware. It's responsible
+for providing the SSI variables needed for the SSI part of rendering.
+
+If you're using django's UpdateCacheMiddleware, add
+PrepareForCacheMiddleware *after it* also. It will add all the data
+needed by SsiMiddleware to the response.
+
+If you're using SessionMiddleware with LocaleMiddleware and your
+USE_I18N or USE_L10N is True, you should also use the provided
+LocaleMiddleware instead of the stock one.
+
+And, last but not least, if using CsrfViewMiddleware, move it to the
+top of MIDDLEWARE_CLASSES, even before SsiMiddleware, and use
+`csrf_token` from `ssify` tags library in your templates, this way
+your CSRF tokens will be set correctly.
+
+So, you should end up with something like this:
+
+    MIDDLEWARE_CLASSES = [
+       'django.middleware.csrf.CsrfViewMiddleware',
+       'ssify.middleware.SsiMiddleware',
+       'django.middleware.cache.UpdateCacheMiddleware',
+       'ssify.middleware.PrepareForCacheMiddleware',
+       ...
+       'ssify.middleware.LocaleMiddleware',
+       ...
+    ]
+
+
+"""
+from __future__ import unicode_literals
 from django.conf import settings
 from django.utils.cache import patch_vary_headers
 from django.middleware import locale
@@ -7,17 +45,39 @@ from . import DEBUG
 
 
 class PrepareForCacheMiddleware(object):
+    """
+    Patches the response object with all the data SsiMiddleware needs.
+
+    This should go after UpdateCacheMiddleware in MIDDLEWARE_CLASSES.
+    """
     @staticmethod
     def process_response(request, response):
+        """Adds a 'X-Ssi-Vars-Needed' header to the response."""
         if getattr(request, 'ssi_vars_needed', None):
-            vars_needed = {k: v.definition
-                           for (k, v) in request.ssi_vars_needed.items()}
+            vars_needed = {}
+            for (k, v) in request.ssi_vars_needed.items():
+                vars_needed[k] = v.definition
             response['X-Ssi-Vars-Needed'] = json_encode(
                 vars_needed, sort_keys=True)
         return response
 
 
 class SsiMiddleware(object):
+    """
+    The main django-ssify middleware.
+
+    It prepends the response content with SSI set statements,
+    providing values for any SSI variables used in the templates.
+
+    It also patches the Vary header with the values given by
+    the SSI variables.
+
+    If SSIFY_DEBUG is set, it also passes the response through
+    DebugUnSsiMiddleware, which interprets and renders the SSI
+    statements, so you can see the output without an actual
+    SSI-enabled webserver.
+
+    """
     def process_request(self, request):
         request.ssi_vary = set()
         #request.ssi_cache_control_after = set()
@@ -31,8 +91,8 @@ class SsiMiddleware(object):
             vars_needed = request.ssi_vars_needed
         else:
             vars_needed = json_decode(response.get('X-Ssi-Vars-Needed', '{}'))
-            vars_needed = {k: SsiVariable(*v)
-                           for (k, v) in vars_needed.items()}
+            for k, v in vars_needed.items():
+                vars_needed[k] = SsiVariable(*v)
 
         if vars_needed:
             response.content = provide_vars(request, vars_needed) + \
@@ -41,22 +101,6 @@ class SsiMiddleware(object):
         # Add the Vary headers declared by all the SSI vars.
         patch_vary_headers(response, sorted(request.ssi_vary))
         # TODO: cache control?
-
-        # With a cached response, CsrfViewMiddleware.process_response
-        # was never called, so if we used the csrf token, we must do
-        # its job of setting the csrf token cookie on our own.
-        if (not getattr(request, 'csrf_processing_done', False)
-                and request.META.get("CSRF_COOKIE_USED", False)):
-            response.set_cookie(settings.CSRF_COOKIE_NAME,
-                                request.META["CSRF_COOKIE"],
-                                max_age=getattr(settings, 'CSRF_COOKIE_AGE',
-                                                60 * 60 * 24 * 7 * 52),
-                                domain=settings.CSRF_COOKIE_DOMAIN,
-                                path=settings.CSRF_COOKIE_PATH,
-                                secure=settings.CSRF_COOKIE_SECURE,
-                                httponly=settings.CSRF_COOKIE_HTTPONLY
-                                )
-            request.csrf_processing_done = True
 
     def process_response(self, request, response):
         if hasattr(response, 'render') and callable(response.render):

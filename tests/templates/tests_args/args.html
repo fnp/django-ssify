@@ -1,0 +1,10 @@
+{% load ssify test_tags %}
+
+{# Django 1.4 compatibility: TemplateView sets `params` from the URL. #}
+{% if params.limit %}
+    {% random_number limit=params.limit as a %}
+{% else %}
+    {% random_number limit=limit as a %}
+{% endif %}
+{% random_number a as b %}
+{% random_number limit=b %}
