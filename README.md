@@ -24,8 +24,8 @@ License
 Dependencies
 ============
 
- * Python >= 2.7
- * Django >= 1.6
+ * Python >= 2.6
+ * Django >= 1.4
 
 
 Installation
