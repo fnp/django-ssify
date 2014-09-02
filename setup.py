@@ -10,7 +10,7 @@ setup(
     version='0.1',
     author='Radek Czajka',
     author_email='radekczajka@nowoczesnapolska.org.pl',
-    url='',
+    url='http://git.nowoczesnapolska.org.pl/?p=django-ssify.git',
     packages=find_packages(exclude=['tests*']),
     license='LICENSE',
     description='Two-phased rendering using SSI.',
