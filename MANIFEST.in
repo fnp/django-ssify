@@ -1,5 +1,6 @@
 include LICENSE
 include README.md
+include CHANGELOG.md
 include runtests.py
 include tox.ini
 recursive-include ssify/templates *.html
