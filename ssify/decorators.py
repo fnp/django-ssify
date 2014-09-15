@@ -11,12 +11,14 @@ from inspect import getargspec
 import warnings
 from django.template.base import parse_bits
 from django.utils.translation import get_language, activate
-from .store import cache_include
+from .cache import cache_include, DEFAULT_TIMEOUT
 from . import exceptions
 from .variables import SsiVariable
 
 
-def ssi_included(view=None, use_lang=True, get_ssi_vars=None):
+def ssi_included(view=None, use_lang=True,
+        timeout=DEFAULT_TIMEOUT, version=None,
+        get_ssi_vars=None, patch_response=None):
     """
     Marks a view to be used as a snippet to be included with SSI.
 
@@ -72,7 +74,8 @@ def ssi_included(view=None, use_lang=True, get_ssi_vars=None):
 
                     # Don't use default django response caching for this view,
                     # just save the contents instead.
-                    cache_include(request.path, response.content)
+                    cache_include(request.path, response.content,
+                        timeout=timeout, version=version)
 
                 if hasattr(response, 'render') and callable(response.render):
                     response.add_post_render_callback(_check_included_vars)
@@ -84,11 +87,12 @@ def ssi_included(view=None, use_lang=True, get_ssi_vars=None):
         # Remember get_ssi_vars so that in can be computed from args/kwargs
         # by including view.
         new_view.get_ssi_vars = get_ssi_vars
+        new_view.ssi_patch_response = patch_response
         return new_view
     return dec(view) if view else dec
 
 
-def ssi_variable(register, vary=None, name=None):
+def ssi_variable(register, name=None, patch_response=None):
     """
     Creates a template tag representing an SSI variable from a function.
 
@@ -142,7 +146,7 @@ def ssi_variable(register, vary=None, name=None):
                                       ['context'] + params[1:], varargs, varkw,
                                       defaults, takes_context=True,
                                       name=function_name)
-            return SsiVariableNode(tagpath, args, kwargs, vary, asvar)
+            return SsiVariableNode(tagpath, args, kwargs, patch_response, asvar)
         _ssi_var_tag.get_value = func
         #return _ssi_var_tag
         return func

@@ -70,9 +70,9 @@ Line 3 of <!--#echo var='va50d914691ecf9b421c680d93ba1263e' encoding='none'-->
             b"file='/quote/${v3e7f638af74c9f420b6d2c5fe4dda51d}'-->"
         )
 
-    @override_settings(SSIFY_DEBUG=True)
+    @override_settings(SSIFY_RENDER=True)
     def test_debug_render_random_quote(self):
-        """Renders the complete view using the DebugSsiMiddleware."""
+        """Renders the complete view using the SsiRenderMiddleware."""
         response = self.client.get('/')
         if hasattr(response, 'render') and callable(response.render):
             response.render()

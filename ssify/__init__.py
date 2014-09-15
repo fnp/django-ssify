@@ -16,19 +16,8 @@ from __future__ import unicode_literals
 
 __version__ = '1.0'
 __date__ = '2014-08-26'
-__all__ = ('ssi_expect', 'SsiVariable', 'ssi_included', 'ssi_variable')
-
-from django.conf import settings
-from django.utils.functional import lazy
-
-SETTING = lazy(
-    lambda name, default: getattr(settings, name, default),
-    bool, int, list, tuple, str)
-
-INCLUDES_CACHES = SETTING('SSIFY_INCLUDES_CACHES', ('ssify',))
-DEBUG = SETTING('SSIFY_DEBUG', False)
-DEBUG_VERBOSE = SETTING('SSIFY_DEBUG_VERBOSE', True)
-
+__all__ = ('flush_ssi_includes', 'ssi_expect', 'SsiVariable', 'ssi_included', 'ssi_variable')
 
 from .variables import ssi_expect, SsiVariable
 from .decorators import ssi_included, ssi_variable
+from .cache import flush_ssi_includes

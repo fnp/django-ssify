@@ -119,11 +119,11 @@ def ssi_expect(var, type_):
 
 class SsiVariableNode(template.Node):
     """ Node for the SsiVariable tags. """
-    def __init__(self, tagpath, args, kwargs, vary=None, asvar=None):
+    def __init__(self, tagpath, args, kwargs, patch_response=None, asvar=None):
         self.tagpath = tagpath
         self.args = args
         self.kwargs = kwargs
-        self.vary = vary
+        self.patch_response = patch_response
         self.asvar = asvar
 
     def __repr__(self):
@@ -138,8 +138,8 @@ class SsiVariableNode(template.Node):
 
         request = context['request']
         request.ssi_vars_needed[var.name] = var
-        if self.vary:
-            request.ssi_vary.update(self.vary)
+        if self.patch_response:
+            request.ssi_patch_response.extend(self.patch_response)
 
         if self.asvar:
             context.dicts[0][self.asvar] = var

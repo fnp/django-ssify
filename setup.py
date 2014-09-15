@@ -7,20 +7,20 @@ from setuptools import setup, find_packages
 
 setup(
     name='django-ssify',
-    version='0.1',
+    version='0.2',
     author='Radek Czajka',
     author_email='radekczajka@nowoczesnapolska.org.pl',
-    url='http://git.nowoczesnapolska.org.pl/?p=django-ssify.git',
+    url='http://git.mdrn.pl/django-ssify.git',
     packages=find_packages(exclude=['tests*']),
     license='LICENSE',
     description='Two-phased rendering using SSI.',
     long_description=open('README.md').read(),
     install_requires=[
-        'Django>=1.4',
+        'Django>=1.5',
         ],
     test_suite="runtests.runtests",
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Environment :: Web Environment",
         "Framework :: Django",
         "Intended Audience :: Developers",

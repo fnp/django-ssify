@@ -53,7 +53,6 @@ if not settings.configured and not os.environ.get('DJANGO_SETTINGS_MODULE'):
         STATIC_URL='/static/',
         ROOT_URLCONF='tests.urls',
         SITE_ID=1,
-        SSIFY_DEBUG_VERBOSE=False,
         TEMPLATE_CONTEXT_PROCESSORS=(
             "django.core.context_processors.debug",
             "django.core.context_processors.i18n",

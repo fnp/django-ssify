@@ -37,11 +37,15 @@ So, you should end up with something like this:
 """
 from __future__ import unicode_literals
 from django.conf import settings
-from django.utils.cache import patch_vary_headers
 from django.middleware import locale
+from django.utils.cache import patch_vary_headers
+from .conf import conf
 from .serializers import json_decode, json_encode
+from .utils import ssi_vary_on_cookie
 from .variables import SsiVariable, provide_vars
-from . import DEBUG
+
+
+CACHE_HEADERS = ('Pragma', 'Cache-Control', 'Vary')
 
 
 class PrepareForCacheMiddleware(object):
@@ -53,12 +57,41 @@ class PrepareForCacheMiddleware(object):
     @staticmethod
     def process_response(request, response):
         """Adds a 'X-Ssi-Vars-Needed' header to the response."""
-        if getattr(request, 'ssi_vars_needed', None):
+        if ('X-Ssi-Vars-Needed' not in response and
+                getattr(request, 'ssi_vars_needed', None)):
             vars_needed = {}
             for (k, v) in request.ssi_vars_needed.items():
                 vars_needed[k] = v.definition
             response['X-Ssi-Vars-Needed'] = json_encode(
                 vars_needed, sort_keys=True)
+
+        if ('X-ssi-restore' not in response and
+                getattr(request, 'ssi_patch_response', None)):
+            # We have some response modifiers set by ssi_includes and
+            # ssi_variables. Those are used, because unrendered SSI
+            # templates Django cache receives should have different
+            # caching headers, than pages rendered with request-specific
+            # information.
+            # What we do here is apply the modifiers, but restore
+            # previous values of any cache-relevant headers and set
+            # a custom header with modified values to set them
+            # after-cache.
+            original_fields = {}
+            for field in CACHE_HEADERS:
+                original_fields[field] = response.get(field, None)
+            for modifier in request.ssi_patch_response:
+                modifier(response)
+            restore_fields = {}
+            for field in CACHE_HEADERS:
+                new_value = response.get(field, None)
+                if new_value != original_fields[field]:
+                    restore_fields[field] = new_value
+                    if original_fields[field] is None:
+                        del response[field]
+                    else:
+                        response[field] = original_fields[field]
+            response['X-ssi-restore'] = json_encode(restore_fields)
+
         return response
 
 
@@ -72,15 +105,14 @@ class SsiMiddleware(object):
     It also patches the Vary header with the values given by
     the SSI variables.
 
-    If SSIFY_DEBUG is set, it also passes the response through
-    DebugUnSsiMiddleware, which interprets and renders the SSI
+    If SSIFY_RENDER is set, it also passes the response through
+    SsiRenderMiddleware, which interprets and renders the SSI
     statements, so you can see the output without an actual
     SSI-enabled webserver.
 
     """
     def process_request(self, request):
-        request.ssi_vary = set()
-        #request.ssi_cache_control_after = set()
+        request.ssi_patch_response = []
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         request.ssi_vars_needed = {}
@@ -98,9 +130,18 @@ class SsiMiddleware(object):
             response.content = provide_vars(request, vars_needed) + \
                 response.content
 
-        # Add the Vary headers declared by all the SSI vars.
-        patch_vary_headers(response, sorted(request.ssi_vary))
-        # TODO: cache control?
+        if 'X-ssi-restore' in response:
+            # The modifiers have already been applied to the response
+            # by the PrepareForCacheMiddleware.
+            # All we need to do is restore cache-relevant headers.
+            for header, content in json_decode(response['X-ssi-restore']).items():
+                if content is None:
+                    del response[header]
+                else:
+                    response[header] = content
+        else:
+            for response_modifier in getattr(request, 'ssi_patch_response', []):
+                response_modifier(response)
 
     def process_response(self, request, response):
         if hasattr(response, 'render') and callable(response.render):
@@ -110,9 +151,9 @@ class SsiMiddleware(object):
         else:
             self._process_rendered_response(request, response)
 
-        if DEBUG:
-            from .middleware_debug import DebugUnSsiMiddleware
-            response = DebugUnSsiMiddleware().process_response(
+        if conf.RENDER:
+            from .middleware_debug import SsiRenderMiddleware
+            response = SsiRenderMiddleware().process_response(
                 request, response)
 
         return response
@@ -147,4 +188,4 @@ class LocaleMiddleware(locale.LocaleMiddleware):
             if (request.session.accessed and
                     (settings.USE_I18N or settings.USE_L10N)):
                 request.session.accessed = False
-                request.ssi_vary.add('Cookie')
+                request.ssi_patch_response.append(ssi_vary_on_cookie)

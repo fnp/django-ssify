@@ -49,10 +49,9 @@ class ArgsTestCase(TestCase):
                  ]),
             )
 
-    @override_settings(SSIFY_DEBUG=True)
-    def test_debug_render_include_args(self):
-        pass
-        """Renders the complete view using the DebugSsiMiddleware."""
+    @override_settings(SSIFY_RENDER=True)
+    def test_render_include_args(self):
+        """Renders the complete view using the SsiRenderMiddleware."""
         response = self.client.get('/include_args')
         if hasattr(response, 'render') and callable(response.render):
             response.render()

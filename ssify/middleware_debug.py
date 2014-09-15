@@ -5,7 +5,7 @@
 """
 This module should only be used for debugging SSI statements.
 
-Using DebugUnSsiMiddleware in production defeats the purpose of using SSI
+Using SsiRenderMiddleware in production defeats the purpose of using SSI
 in the first place, and is unsafe. You should use a proper webserver with SSI
 support as a proxy (i.e. Nginx with ssi=on).
 
@@ -17,7 +17,9 @@ try:
 except ImportError:
     from urlparse import urlparse
 from django.core.urlresolvers import resolve
-from ssify import DEBUG_VERBOSE
+from .cache import get_caches
+
+from .conf import conf
 
 
 SSI_SET = re.compile(r"<!--#set var='(?P<var>[^']+)' "
@@ -31,16 +33,16 @@ SSI_IF = re.compile(r"(?P<header><!--#if expr='(?P<expr>[^']*)'-->)"
 SSI_VAR = re.compile(r"\$\{(?P<var>.+)\}")  # TODO: escaped?
 
 
-class DebugUnSsiMiddleware(object):
+class SsiRenderMiddleware(object):
     """
     Emulates a webserver with SSI support.
 
     This middleware should only be used for debugging purposes.
-    SsiMiddleware will enable it automatically, if SSIFY_DEBUG setting
+    SsiMiddleware will enable it automatically, if SSIFY_RENDER setting
     is set to True, so you don't normally need to include it in
     MIDDLEWARE_CLASSES.
 
-    If SSIFY_DEBUG_VERBOSE setting is True, it will also leave some
+    If SSIFY_RENDER_VERBOSE setting is True, it will also leave some
     information in HTML comments.
 
     """
@@ -50,18 +52,29 @@ class DebugUnSsiMiddleware(object):
         def ssi_include(match):
             """Replaces SSI include with contents rendered by relevant view."""
             path = process_value(match.group('path'))
-            func, args, kwargs = resolve(path)
-            parsed = urlparse(path)
+            content = None
+            for cache in get_caches():
+                content = cache.get(path)
+                if content is not None:
+                    break
+            if content is None:
+                func, args, kwargs = resolve(path)
+                parsed = urlparse(path)
 
-            # Reuse the original request, but reset some attributes.
-            request.META['PATH_INFO'] = request.path_info = \
-                request.path = parsed.path
-            request.META['QUERY_STRING'] = parsed.query
-            request.ssi_vars_needed = {}
+                # Reuse the original request, but reset some attributes.
+                request.META['PATH_INFO'] = request.path_info = \
+                    request.path = parsed.path
+                request.META['QUERY_STRING'] = parsed.query
+                request.ssi_vars_needed = {}
 
-            content = func(request, *args, **kwargs).content.decode('ascii')
-            content = process_content(content)
-            if DEBUG_VERBOSE:
+                subresponse = func(request, *args, **kwargs)
+                # FIXME: we should deal directly with bytes here.
+                if subresponse.streaming:
+                    content = b"".join(subresponse.streaming_content)
+                else:
+                    content = subresponse.content
+            content = process_content(content.decode('utf-8'))
+            if conf.RENDER_VERBOSE:
                 return "".join((
                     match.group(0),
                     content,
@@ -73,7 +86,7 @@ class DebugUnSsiMiddleware(object):
         def ssi_set(match):
             """Interprets SSI set statement."""
             variables[match.group('var')] = match.group('value')
-            if DEBUG_VERBOSE:
+            if conf.RENDER_VERBOSE:
                 return match.group(0)
             else:
                 return ""
@@ -81,7 +94,7 @@ class DebugUnSsiMiddleware(object):
         def ssi_echo(match):
             """Interprets SSI echo, outputting the value of the variable."""
             content = variables[match.group('var')]
-            if DEBUG_VERBOSE:
+            if conf.RENDER_VERBOSE:
                 return "".join((
                     match.group(0),
                     content,
@@ -96,8 +109,8 @@ class DebugUnSsiMiddleware(object):
             if expr:
                 content = match.group('value')
             else:
-                content = match.group('else')
-            if DEBUG_VERBOSE:
+                content = match.group('else') or ''
+            if conf.RENDER_VERBOSE:
                 return "".join((
                     match.group('header'),
                     content,
@@ -124,11 +137,13 @@ class DebugUnSsiMiddleware(object):
 
         variables = {}
         response.content = process_content(
-            response.content.decode('ascii')).encode('ascii')
+            response.content.decode('utf-8')).encode('utf-8')
         response['Content-Length'] = len(response.content)
 
     def process_response(self, request, response):
         """Support for unrendered responses."""
+        if response.streaming:
+            return response
         if hasattr(response, 'render') and callable(response.render):
             response.add_post_render_callback(
                 lambda r: self._process_rendered_response(request, r)

@@ -25,7 +25,7 @@ Dependencies
 ============
 
  * Python >= 2.6
- * Django >= 1.4
+ * Django >= 1.5
 
 
 Installation
@@ -39,8 +39,6 @@ Installation
    * ssify.middleware.LocaleMiddleware instead of stock LocaleMiddleware.
 3. Make sure you have 'django.core.context_processors.request' in your
    TEMPLATE_CONTEXT_PROCESSORS.
-3. Define your caches in CACHES and SSIFY_INCLUDES_CACHES
-   for storing ssi includes.
 4. Configure your webserver to use SSI ('ssi=on' with Nginx).
 
 Usage

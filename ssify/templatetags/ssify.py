@@ -5,24 +5,12 @@
 from __future__ import absolute_import, unicode_literals
 from django.conf import settings
 from django.core.urlresolvers import NoReverseMatch, reverse, resolve
-from django.middleware.csrf import get_token, _sanitize_token
+from django.middleware.csrf import get_token, _sanitize_token, rotate_token
 from django import template
 from django.utils.translation import get_language
 from ssify.decorators import ssi_variable
+from ssify.utils import ssi_vary_on_cookie
 from ssify.variables import SsiVariable
-
-try:
-    from django.middleware.csrf import rotate_token
-except ImportError:
-    from django.middleware.csrf import _get_new_csrf_key
-
-    # Missing in Django 1.4
-    def rotate_token(request):
-        request.META.update({
-            "CSRF_COOKIE_USED": True,
-            "CSRF_COOKIE": _get_new_csrf_key(),
-
-        })
 
 
 register = template.Library()
@@ -72,11 +60,16 @@ def ssi_include(context, name_, **kwargs):
                 var = SsiVariable(*var)
             request.ssi_vars_needed[var.name] = var
 
+    # Remember the decorators to use on the including view.
+    patch_response = getattr(view, 'ssi_patch_response', None)
+    if patch_response:
+        request.ssi_patch_response.extend(patch_response)
+
     # Output the SSI include.
     return "<!--#include file='%s'-->" % url
 
 
-@ssi_variable(register, vary=('Cookie',))
+@ssi_variable(register, patch_response=[ssi_vary_on_cookie])
 def get_csrf_token(request):
     """
     CsrfViewMiddleware.process_view is never called for cached
@@ -103,5 +96,5 @@ def get_csrf_token(request):
 
 
 @register.inclusion_tag('ssify/csrf_token.html', takes_context=True)
-def csrf_token(context):
+def ssi_csrf_token(context):
     return {'request': context['request']}
