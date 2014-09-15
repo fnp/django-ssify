@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1 (2014-09-15)
+
+* Fix packaging errors.
+
+
 ## 0.2 (2014-09-15)
 
 * Nicer cache choosing: use settings.SSIFY_CACHE_ALIASES if set,

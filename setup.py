@@ -7,11 +7,12 @@ from setuptools import setup, find_packages
 
 setup(
     name='django-ssify',
-    version='0.2',
+    version='0.2.1',
     author='Radek Czajka',
     author_email='radekczajka@nowoczesnapolska.org.pl',
     url='http://git.mdrn.pl/django-ssify.git',
     packages=find_packages(exclude=['tests*']),
+    package_data={'ssify': ['templates/ssify/*.html']},
     license='LICENSE',
     description='Two-phased rendering using SSI.',
     long_description=open('README.md').read(),
