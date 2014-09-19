@@ -37,5 +37,6 @@ setup(
         "Programming Language :: Python :: 3.4",
         "Topic :: Internet :: WWW/HTTP",
         "Topic :: Software Development :: Code Generators",
-    ]
+    ],
+    zip_safe=False,
 )
