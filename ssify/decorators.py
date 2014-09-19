@@ -9,6 +9,8 @@ from __future__ import unicode_literals
 import functools
 from inspect import getargspec
 import warnings
+from django.conf import settings
+from django.http import Http404
 from django.template.base import parse_bits
 from django.utils.translation import get_language, activate
 from .cache import cache_include, DEFAULT_TIMEOUT
@@ -39,6 +41,8 @@ def ssi_included(view=None, use_lang=True,
                     lang = kwargs.pop('lang')
                 except KeyError:
                     raise exceptions.NoLangFieldError(request)
+                if lang not in [language[0] for language in settings.LANGUAGES]:
+                    raise Http404
                 current_lang = get_language()
                 activate(lang)
                 request.LANGUAGE_CODE = lang

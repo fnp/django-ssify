@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.2 (2014-09-19)
+
+* Return 404 from ssi_included views with unsupported languages.
+
+* Set zip_safe=False, so egg loader middleware isn't required.
+
+
 ## 0.2.1 (2014-09-15)
 
 * Fix packaging errors.

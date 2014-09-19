@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='django-ssify',
-    version='0.2.1',
+    version='0.2.2',
     author='Radek Czajka',
     author_email='radekczajka@nowoczesnapolska.org.pl',
     url='http://git.mdrn.pl/django-ssify.git',
@@ -37,5 +37,6 @@ setup(
         "Programming Language :: Python :: 3.4",
         "Topic :: Internet :: WWW/HTTP",
         "Topic :: Software Development :: Code Generators",
-    ]
+    ],
+    zip_safe=False,
 )
