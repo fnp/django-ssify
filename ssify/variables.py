@@ -137,8 +137,12 @@ class SsiVariableNode(template.Node):
         var = SsiVariable(self.tagpath, resolved_args, resolved_kwargs)
 
         request = context['request']
+        if not hasattr(request, 'ssi_vars_needed'):
+            request.ssi_vars_needed = {}
         request.ssi_vars_needed[var.name] = var
         if self.patch_response:
+            if not hasattr(request, 'ssi_patch_response'):
+                request.ssi_patch_response = []
             request.ssi_patch_response.extend(self.patch_response)
 
         if self.asvar:

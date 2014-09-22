@@ -188,4 +188,6 @@ class LocaleMiddleware(locale.LocaleMiddleware):
             if (request.session.accessed and
                     (settings.USE_I18N or settings.USE_L10N)):
                 request.session.accessed = False
+                if not hasattr(request, 'ssi_patch_response'):
+                    request.ssi_patch_response = []
                 request.ssi_patch_response.append(ssi_vary_on_cookie)

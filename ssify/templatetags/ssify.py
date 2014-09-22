@@ -58,11 +58,15 @@ def ssi_include(context, name_, **kwargs):
         for var in pass_vars:
             if not isinstance(var, SsiVariable):
                 var = SsiVariable(*var)
+            if not hasattr(request, 'ssi_vars_needed'):
+                request.ssi_vars_needed = {}
             request.ssi_vars_needed[var.name] = var
 
     # Remember the decorators to use on the including view.
     patch_response = getattr(view, 'ssi_patch_response', None)
     if patch_response:
+        if not hasattr(request, 'ssi_patch_response'):
+            request.ssi_patch_response = []
         request.ssi_patch_response.extend(patch_response)
 
     # Output the SSI include.

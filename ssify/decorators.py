@@ -56,7 +56,7 @@ def ssi_included(view=None, use_lang=True,
                 request._cache_update_cache = False
 
                 def _check_included_vars(response):
-                    used_vars = request.ssi_vars_needed
+                    used_vars = getattr(request, 'ssi_vars_needed', {})
                     if get_ssi_vars:
                         # Remove the ssi vars that should be provided
                         # by the including view.
