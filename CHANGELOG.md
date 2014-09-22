@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.3 (2014-09-22)
+
+* Don't assume request object we are passed at any point still has
+  our custom attributes.
+
+
 ## 0.2.2 (2014-09-19)
 
 * Return 404 from ssi_included views with unsupported languages.

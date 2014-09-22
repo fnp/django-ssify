@@ -14,7 +14,9 @@ with `ssi_included` decorator.
 """
 from __future__ import unicode_literals
 
-__version__ = '1.0'
+from .version import VERSION
+
+__version__ = VERSION
 __date__ = '2014-08-26'
 __all__ = ('flush_ssi_includes', 'ssi_expect', 'SsiVariable', 'ssi_included', 'ssi_variable')
 

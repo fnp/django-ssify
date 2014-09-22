@@ -3,11 +3,22 @@
 # This file is part of django-ssify, licensed under GNU Affero GPLv3 or later.
 # Copyright © Fundacja Nowoczesna Polska. See README.md for more information.
 #
+import os
 from setuptools import setup, find_packages
+
+
+def get_version():
+    basedir = os.path.dirname(__file__)
+    with open(os.path.join(basedir, 'ssify/version.py')) as f:
+        VERSION = None
+        exec(f.read())
+        return VERSION
+    raise RuntimeError('No version info found.')
+
 
 setup(
     name='django-ssify',
-    version='0.2.2',
+    version=get_version(),
     author='Radek Czajka',
     author_email='radekczajka@nowoczesnapolska.org.pl',
     url='http://git.mdrn.pl/django-ssify.git',
