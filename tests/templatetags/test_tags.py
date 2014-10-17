@@ -24,3 +24,8 @@ def number_of_quotes(request):
 @ssi_variable(register)
 def quote_len_odd(request, which):
     return bool(len(QUOTES[which]) % 1)
+
+
+@ssi_variable(register)
+def ugly_var_for_render_test(request):
+    return """Zażółć gęślą jaźń\n'"\\ <!--#echo var='test' encoding='none'-->"""

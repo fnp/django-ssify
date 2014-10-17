@@ -29,8 +29,9 @@ SSI_INCLUDE = re.compile(r"<!--#include (?:virtual|file)='(?P<path>[^']+)'-->")
 SSI_IF = re.compile(r"(?P<header><!--#if expr='(?P<expr>[^']*)'-->)"
                     r"(?P<value>.*?)(?:<!--#else-->(?P<else>.*?))?"
                     r"<!--#endif-->", re.S)
-        # TODO: escaped?
-SSI_VAR = re.compile(r"\$\{(?P<var>.+)\}")  # TODO: escaped?
+SSI_VAR = re.compile(r"\$\{(?P<var>.+)\}")
+
+UNESCAPE = re.compile(r'\\(.)')
 
 
 class SsiRenderMiddleware(object):
@@ -85,9 +86,11 @@ class SsiRenderMiddleware(object):
 
         def ssi_set(match):
             """Interprets SSI set statement."""
-            variables[match.group('var')] = match.group('value')
+            content = match.group('value')
+            content = re.sub(UNESCAPE, r'\1', content)
+            variables[match.group('var')] = content
             if conf.RENDER_VERBOSE:
-                return match.group(0)
+                return content
             else:
                 return ""
 
