@@ -11,7 +11,8 @@ at request time to the prerendered templates.
 """
 from __future__ import unicode_literals
 from hashlib import md5
-from django import template
+from django.template import Node
+from django.template.base import get_library
 from django.utils.encoding import force_text, python_2_unicode_compatible
 from django.utils.functional import Promise
 from django.utils.safestring import mark_safe
@@ -72,7 +73,7 @@ class SsiVariable(object):
     def get_value(self, request):
         """Computes the real value of the variable, using the request."""
         taglib, tagname = self.tagpath.rsplit('.', 1)
-        return template.get_library(taglib).tags[tagname].get_value(
+        return get_library(taglib).tags[tagname].get_value(
             request, *self.args, **self.kwargs)
 
     def __str__(self):
@@ -117,7 +118,7 @@ def ssi_expect(var, type_):
         return type_(var)
 
 
-class SsiVariableNode(template.Node):
+class SsiVariableNode(Node):
     """ Node for the SsiVariable tags. """
     def __init__(self, tagpath, args, kwargs, patch_response=None, asvar=None):
         self.tagpath = tagpath

@@ -121,10 +121,14 @@ class SsiMiddleware(object):
         # Prepend the SSI variables.
         if hasattr(request, 'ssi_vars_needed'):
             vars_needed = request.ssi_vars_needed
-        else:
-            vars_needed = json_decode(response.get('X-Ssi-Vars-Needed', '{}'))
+        elif 'X-Ssi-Vars-Needed' in response:
+            vars_needed = json_decode(response['X-Ssi-Vars-Needed'])
             for k, v in vars_needed.items():
                 vars_needed[k] = SsiVariable(*v)
+            if not settings.DEBUG:
+                del response['X-Ssi-Vars-Needed']
+        else:
+            vars_needed = None
 
         if vars_needed:
             response.content = provide_vars(request, vars_needed) + \
@@ -139,6 +143,8 @@ class SsiMiddleware(object):
                     del response[header]
                 else:
                     response[header] = content
+            if not settings.DEBUG:
+                del response['X-ssi-restore']
         else:
             for response_modifier in getattr(request, 'ssi_patch_response', []):
                 response_modifier(response)

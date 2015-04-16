@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.4 (2015-04-16)
+
+* Django 1.8 compatibility.
+
+* Remove private headers from response.
+
+* Python-3 compatible get_version.
+
+
 ## 0.2.3 (2014-09-22)
 
 * Don't assume request object we are passed at any point still has

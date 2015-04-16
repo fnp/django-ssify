@@ -10,9 +10,9 @@ from setuptools import setup, find_packages
 def get_version():
     basedir = os.path.dirname(__file__)
     with open(os.path.join(basedir, 'ssify/version.py')) as f:
-        VERSION = None
-        exec(f.read())
-        return VERSION
+        variables = {}
+        exec(f.read(), variables)
+        return variables.get('VERSION')
     raise RuntimeError('No version info found.')
 
 

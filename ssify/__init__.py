@@ -17,7 +17,6 @@ from __future__ import unicode_literals
 from .version import VERSION
 
 __version__ = VERSION
-__date__ = '2014-08-26'
 __all__ = ('flush_ssi_includes', 'ssi_expect', 'SsiVariable', 'ssi_included', 'ssi_variable')
 
 from .variables import ssi_expect, SsiVariable
