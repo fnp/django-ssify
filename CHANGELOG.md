@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.5 (2015-04-16)
+
+* Unescape var values in render middleware.
+
+* Test on pypy.
+
+
 ## 0.2.4 (2015-04-16)
 
 * Django 1.8 compatibility.
