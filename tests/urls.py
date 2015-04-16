@@ -53,4 +53,9 @@ urlpatterns = patterns(
     url(r'^language/(?P<lang>.+)$', 'language_with_lang', name='language_with_lang'),
     url(r'^language$', 'language_without_lang', name='language_without_lang'),
     url(r'^bad_language$', 'language_with_lang', name='bad_language_with_lang'),
+
+    # tests.render
+    url(r'^render$',
+        TemplateView.as_view(template_name='tests_render/test_render.html')
+        ),
 )

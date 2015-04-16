@@ -14,3 +14,4 @@ from .test_args import *
 from .test_basic import *
 from .test_csrf import *
 from .test_locale import *
+from .test_render import *
