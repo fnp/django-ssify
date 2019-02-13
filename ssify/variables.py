@@ -12,7 +12,21 @@ at request time to the prerendered templates.
 from __future__ import unicode_literals
 from hashlib import md5
 from django.template import Node
-from django.template.base import get_library
+
+try:
+    # Django < 1.9
+    from django.template.base import get_library
+except:
+    from importlib import import_module
+    from django.template.backends.django import get_installed_libraries
+
+    def get_library(taglib):
+        if not hasattr(get_library, 'libraries'):
+            get_library.libraries = get_installed_libraries()
+        if isinstance(get_library.libraries[taglib], str):
+            get_library.libraries[taglib] = import_module(get_library.libraries[taglib]).register
+        return get_library.libraries[taglib]
+
 from django.utils.encoding import force_text, python_2_unicode_compatible
 from django.utils.functional import Promise
 from django.utils.safestring import mark_safe

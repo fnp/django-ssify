@@ -4,8 +4,15 @@
 #
 from __future__ import unicode_literals
 
+import re
 from django.conf import settings
 from django.test import Client, TestCase
+
+try:
+    from django.middleware.csrf import _compare_salted_tokens
+except ImportError:
+    # Django < 1.10
+    _compare_salted_tokens = lambda t1, t2: t1 == t2
 
 
 class CsrfTestCase(TestCase):
@@ -15,23 +22,20 @@ class CsrfTestCase(TestCase):
     def assertCsrfTokenOk(self, response):
         token = response.cookies[settings.CSRF_COOKIE_NAME].value
         self.assertTrue(token)
-        self.assertEqual(
-            response.content.strip(),
-            ("<!--#set var='vd07f6920655622adc90dd591c545bb2a' value='%s'-->\n\n"
-            "<input type='hidden' name='csrfmiddlewaretoken' value='"
-            "<!--#echo var='vd07f6920655622adc90dd591c545bb2a' "
-            "encoding='none'-->' />" % token).encode('ascii')
+        match = re.match(
+            r"<!--#set var='vd07f6920655622adc90dd591c545bb2a' value='([A-Za-z0-9]*)'-->\n\n"
+            r"<input type='hidden' name='csrfmiddlewaretoken' value='"
+            r"<!--#echo var='vd07f6920655622adc90dd591c545bb2a' "
+            r"encoding='none'-->' />",
+            response.content.strip().decode('ascii'),
+            re.MULTILINE
         )
+        self.assertTrue(_compare_salted_tokens(match.group(1), token))
         return token
 
     def test_csrf_token(self):
         response = self.client.get('/csrf')
         token = self.assertCsrfTokenOk(response)
-
-        # And now for a second request, with the token cookie.
-        response = self.client.get('/csrf')
-        new_token = self.assertCsrfTokenOk(response)
-        self.assertEqual(new_token, token)
 
         # Make a bad request to see that CSRF protection works.
         response = self.client.post('/csrf_check', {

@@ -11,7 +11,12 @@ from inspect import getargspec
 import warnings
 from django.conf import settings
 from django.http import Http404
-from django.template.base import parse_bits
+try:
+    # Django 1.9
+    from django.template.library import parse_bits
+except ImportError:
+    from django.template.base import parse_bits
+
 from django.utils.translation import get_language, activate
 from .cache import cache_include, DEFAULT_TIMEOUT
 from . import exceptions

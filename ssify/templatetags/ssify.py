@@ -4,9 +4,15 @@
 #
 from __future__ import absolute_import, unicode_literals
 from django.conf import settings
-from django.core.urlresolvers import NoReverseMatch, reverse, resolve
+try:
+    from django.urls import NoReverseMatch, reverse, resolve
+except ImportError:
+    # Django < 2
+    from django.core.urlresolvers import NoReverseMatch, reverse, resolve
+
 from django.middleware.csrf import get_token, _sanitize_token, rotate_token
 from django import template
+from django.utils.safestring import mark_safe
 from django.utils.translation import get_language
 from ssify.decorators import ssi_variable
 from ssify.utils import ssi_vary_on_cookie
@@ -70,7 +76,7 @@ def ssi_include(context, name_, **kwargs):
         request.ssi_patch_response.extend(patch_response)
 
     # Output the SSI include.
-    return "<!--#include file='%s'-->" % url
+    return mark_safe("<!--#include file='%s'-->" % url)
 
 
 @ssi_variable(register, patch_response=[ssi_vary_on_cookie])

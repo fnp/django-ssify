@@ -40,7 +40,17 @@ if not settings.configured and not os.environ.get('DJANGO_SETTINGS_MODULE'):
         ],
         LANGUAGE_CODE='pl',
         MEDIA_URL='/media/',
-        MIDDLEWARE_CLASSES=[
+        MIDDLEWARE_CLASSES=[  # Django < 1.10
+            'django.middleware.csrf.CsrfViewMiddleware',
+            'ssify.middleware.SsiMiddleware',
+            'django.middleware.cache.UpdateCacheMiddleware',
+            'ssify.middleware.PrepareForCacheMiddleware',
+            'django.middleware.common.CommonMiddleware',
+            'django.contrib.sessions.middleware.SessionMiddleware',
+            'ssify.middleware.LocaleMiddleware',
+            'django.middleware.cache.FetchFromCacheMiddleware',
+        ],
+        SMIDDLEWARE = [  # Django < 1.10
             'django.middleware.csrf.CsrfViewMiddleware',
             'ssify.middleware.SsiMiddleware',
             'django.middleware.cache.UpdateCacheMiddleware',
@@ -53,12 +63,26 @@ if not settings.configured and not os.environ.get('DJANGO_SETTINGS_MODULE'):
         STATIC_URL='/static/',
         ROOT_URLCONF='tests.urls',
         SITE_ID=1,
-        TEMPLATE_CONTEXT_PROCESSORS=(
+        TEMPLATE_CONTEXT_PROCESSORS=(  # Django < 1.8
             "django.core.context_processors.debug",
             "django.core.context_processors.i18n",
             "django.core.context_processors.tz",
             "django.core.context_processors.request",
         ),
+        TEMPLATES = [
+            {
+                'BACKEND': 'django.template.backends.django.DjangoTemplates',
+                'APP_DIRS': True,
+                'OPTIONS': {
+                    'context_processors': [
+                        "django.template.context_processors.debug",
+                        "django.template.context_processors.i18n",
+                        "django.template.context_processors.tz",
+                        "django.template.context_processors.request",
+                    ],
+                }
+            },
+        ]
     )
 
 try:

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.6 (2019-02-13)
+
+* Django 1.9-1.11 compatibility.
+
 ## 0.2.5 (2015-04-16)
 
 * Unescape var values in render middleware.

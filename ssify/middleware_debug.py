@@ -12,10 +12,18 @@ support as a proxy (i.e. Nginx with ssi=on).
 """
 from __future__ import unicode_literals
 import re
+
 try:
     from urllib.parse import urlparse
 except ImportError:
     from urlparse import urlparse
+
+try:
+    from django.urls import NoReverseMatch, reverse, resolve
+except ImportError:
+    # Django < 2
+    from django.core.urlresolvers import NoReverseMatch, reverse, resolve
+
 from django.core.urlresolvers import resolve
 from .cache import get_caches
 
