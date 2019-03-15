@@ -118,6 +118,8 @@ class SsiMiddleware(object):
         request.ssi_vars_needed = {}
 
     def _process_rendered_response(self, request, response):
+        if 'Content-Length' in response:
+            del response['Content-Length']
         # Prepend the SSI variables.
         if hasattr(request, 'ssi_vars_needed'):
             vars_needed = request.ssi_vars_needed

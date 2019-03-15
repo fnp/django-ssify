@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.7 (2019-03-15)
+
+* Remove Content-Length response header added in Django 1.11.
+
 ## 0.2.6 (2019-02-13)
 
 * Django 1.9-1.11 compatibility.
